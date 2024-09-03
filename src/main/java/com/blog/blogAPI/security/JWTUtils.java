@@ -55,6 +55,10 @@ public class JWTUtils {
 
     public String extractUsername(String token) {
         if (token == null) return null;
+        System.err.println(Jwts.parser()
+                .verifyWith((SecretKey) getKey())
+                .build().parseSignedClaims(token)
+                .getPayload().toString());
         return Jwts.parser()
                 .verifyWith((SecretKey) getKey())
                 .build().parseSignedClaims(token)

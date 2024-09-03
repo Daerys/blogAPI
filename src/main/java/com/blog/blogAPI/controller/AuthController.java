@@ -15,6 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -22,6 +23,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static com.blog.blogAPI.utils.ControllerUtils.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -43,7 +46,8 @@ public class AuthController {
     private JWTUtils jwtUtils;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthDTO authDTO) {
+    public ResponseEntity<?> register(@RequestBody AuthDTO authDTO, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) return parseBindingResult(bindingResult);
         if (userService.existsByEmail(authDTO.getEmail())) {
             return new ResponseEntity<>("This email is already taken!", HttpStatus.BAD_REQUEST);
         }
@@ -56,11 +60,12 @@ public class AuthController {
 
         userService.save(user);
         UserDTO userDTO = new UserDTO(user);
-        return new ResponseEntity<>(userDTO, HttpStatus.OK);
+        return new ResponseEntity<>(userDTO, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthDTO authDTO) {
+    public ResponseEntity<?> login(@RequestBody AuthDTO authDTO, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) return parseBindingResult(bindingResult);
         System.err.println(authDTO.getPassword());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
