@@ -17,7 +17,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<String> handleAccessDeniedException(AccessDeniedException ex) {
-        return new ResponseEntity<>("You do not have permission to perform this action", HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(ex.getMessage() == null ? "You do not have permission to perform this action"
+                : ex.getMessage() , HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -1,6 +1,5 @@
 package com.blog.blogAPI.controller;
 
-import com.blog.blogAPI.domain.Post;
 import com.blog.blogAPI.domain.User;
 import com.blog.blogAPI.dto.PostDTO;
 import com.blog.blogAPI.service.PostService;
@@ -34,25 +33,20 @@ public class PostController {
         if (user == null) {
             return new ResponseEntity<>(NO_USER_ERROR, HttpStatus.NOT_FOUND);
         }
-        Post postDB = new Post(post.getTitle(), post.getContent(), user);
-        postService.save(postDB);
-        post.setId(postDB.getId());
-        return new ResponseEntity<>(post, HttpStatus.CREATED);
+        PostDTO createdPost = postService.createPost(user, post);
+        return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR') or @securityService.isPostAuthor(authentication, #post.id)")
     @PostMapping("/update")
     public ResponseEntity<?> updatePost(@Valid @RequestBody PostDTO post, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) return parseBindingResult(bindingResult);
-
         User user = userService.findById(post.getAuthorId());
         if (user == null) {
             return new ResponseEntity<>(NO_USER_ERROR, HttpStatus.NOT_FOUND);
         }
-        Post postDB = new Post(post.getTitle(), post.getContent(), user);
-        postService.save(postDB);
-        post.setId(postDB.getId());
-        return new ResponseEntity<>(post, HttpStatus.OK);
+        PostDTO updatedPost = postService.updatePost(user, post);
+        return new ResponseEntity<>(updatedPost, HttpStatus.OK);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR') or @securityService.isPostAuthor(authentication, #post.id)")
@@ -64,15 +58,9 @@ public class PostController {
         if (user == null) {
             return new ResponseEntity<>(NO_USER_ERROR, HttpStatus.NOT_FOUND);
         }
-        try {
-            if (!postService.existById(post.getId())) {
-                return new ResponseEntity<>(NO_POST_ERROR, HttpStatus.NOT_FOUND);
-            }
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(NO_POST_ID_MESSAGE);
+        if (!postService.deletePost(post)) {
+            return new ResponseEntity<>(UNABLE_TO_DELETE_POST_ERROR, HttpStatus.NOT_FOUND);
         }
-
-        postService.delete(postService.findById(post.getId()));
         return ResponseEntity.ok("Post has been deleted successfully");
     }
 

@@ -43,10 +43,8 @@ public class CommentController {
         if (user == null) {
             return new ResponseEntity<>(NO_USER_ERROR, HttpStatus.NOT_FOUND);
         }
-        Comment commentDB = new Comment(comment.getContent(), postService.findById(comment.getPostId()), user);
-        commentService.save(commentDB);
-        comment.setId(commentDB.getId());
-        return new ResponseEntity<>(comment, HttpStatus.CREATED);
+        CommentDTO createdComment = commentService.createComment(user, postService.findById(comment.getPostId()), comment);
+        return new ResponseEntity<>(createdComment, HttpStatus.CREATED);
     }
 
     @PreAuthorize("@securityService.isCommentAuthor(authentication, #comment.id)")
@@ -57,10 +55,8 @@ public class CommentController {
         if (user == null) {
             return new ResponseEntity<>(NO_USER_ERROR, HttpStatus.NOT_FOUND);
         }
-        Comment commentDB = new Comment(comment.getContent(), postService.findById(comment.getPostId()), user);
-        commentService.save(commentDB);
-        comment.setId(commentDB.getId());
-        return new ResponseEntity<>(comment, HttpStatus.OK);
+        CommentDTO updatedComment = commentService.updateComment(comment, postService.findById(comment.getPostId()));
+        return new ResponseEntity<>(updatedComment, HttpStatus.OK);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR') or @securityService.isCommentAuthor(authentication, #comment.id)")
@@ -72,15 +68,7 @@ public class CommentController {
         if (user == null) {
             return new ResponseEntity<>(NO_USER_ERROR, HttpStatus.NOT_FOUND);
         }
-        try {
-            if (!commentService.existById(comment.getId())) {
-                return new ResponseEntity<>(NO_POST_ERROR, HttpStatus.NOT_FOUND);
-            }
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(NO_POST_ID_MESSAGE);
-        }
-
-        commentService.delete(commentService.findById(comment.getId()));
+        if (!commentService.deleteComment(comment)) return new ResponseEntity<>(NO_COMMENT_ERROR, HttpStatus.NOT_FOUND);
         return ResponseEntity.ok("Post has been deleted successfully");
     }
 
